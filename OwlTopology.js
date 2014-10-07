@@ -69,7 +69,7 @@ OwlTopology.prototype.hasNamedIndividual = function (namedIndividual) {
  * Get array of declared objects in the ontology by given type. Searches all
  * <Declaration /> objects and returns an array of found IRIs.
  * @param {string} declarationType (Class|ObjectProperty|DataProperty|NamedIndividual)
- * @returns {*}
+ * @returns {Array.<string>}
  */
 OwlTopology.prototype.getDeclarations = function (declarationType) {
     var nodes = this.doc.find('//ns:Declaration/ns:' + declarationType, OWL_NAMESPACE);
