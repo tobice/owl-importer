@@ -3,7 +3,7 @@ var _ = require('lodash');
 var libxmljs = require('libxmljs');
 var Element = libxmljs.Element;
 
-// Namespace for Xpath searching
+// Namespace for Xpath search
 var OWL_NAMESPACE = {'ns': 'http://www.w3.org/2002/07/owl#'};
 var IRI = 'IRI';
 
@@ -40,35 +40,35 @@ OwlTopology.prototype.hasClass = function (className) {
 
 /**
  * Returns true if topology contains given object property.
- * @param {string} objectPropertyName
+ * @param {string} objectProperty
  * @returns {boolean}
  */
-OwlTopology.prototype.hasObjectProperty = function (objectPropertyName) {
-    return _.contains(this._objectProperties, objectPropertyName);
+OwlTopology.prototype.hasObjectProperty = function (objectProperty) {
+    return _.contains(this._objectProperties, objectProperty);
 };
 
 /**
  * Returns true if topology contains given data property.
- * @param {string} dataPropertyName
+ * @param {string} dataProperty
  * @returns {boolean}
  */
-OwlTopology.prototype.hasDataProperty = function (dataPropertyName) {
-    return _.contains(this._dataProperties, dataPropertyName);
+OwlTopology.prototype.hasDataProperty = function (dataProperty) {
+    return _.contains(this._dataProperties, dataProperty);
 };
 
 /**
  * Returns true if topology contains given named individual.
- * @param {string} namedIndividualName
+ * @param {string} namedIndividual
  * @returns {boolean}
  */
-OwlTopology.prototype.hasNamedIndividual = function (namedIndividualName) {
-    return _.contains(this._namedIndividuals, namedIndividualName);
+OwlTopology.prototype.hasNamedIndividual = function (namedIndividual) {
+    return _.contains(this._namedIndividuals, namedIndividual);
 };
 
 /**
  * Get array of declared objects in the ontology by given type. Searches all
  * <Declaration /> objects and returns an array of found IRIs.
- * @param {string} declarationType
+ * @param {string} declarationType (Class|ObjectProperty|DataProperty|NamedIndividual)
  * @returns {*}
  */
 OwlTopology.prototype.getDeclarations = function (declarationType) {
@@ -81,29 +81,53 @@ OwlTopology.prototype.getDeclarations = function (declarationType) {
 /**
  * Add named individual.
  * @param {string} className
- * @param {string} name
+ * @param {string} individual
  * @returns {OwlTopology}
  */
-OwlTopology.prototype.addNamedIndividual = function (className, name) {
-
+OwlTopology.prototype.addNamedIndividual = function (className, individual) {
     if (!this.hasClass(className)) {
         throw new Error('There is no class ' + className + ' in this ontology');
     }
-
-    if (this.hasNamedIndividual(name)) {
-        throw new Error('Individual ' + name + ' already exists in this ontology');
+    if (this.hasNamedIndividual(individual)) {
+        throw new Error('Individual ' + individual + ' already exists in this ontology');
     }
 
     // Add declaration
     this.root.node('Declaration')
-        .node('NamedIndividual').attr({IRI: '#' + name});
+        .node('NamedIndividual').attr({IRI: '#' + individual});
 
     // Add class assertion
     this.root.node('ClassAssertion')
         .node('Class').attr({IRI: '#' + className}).parent()
-        .node('NamedIndividual').attr({IRI: '#' + name});
+        .node('NamedIndividual').attr({IRI: '#' + individual});
 
-    this._namedIndividuals.push(name);
+    this._namedIndividuals.push(individual);
+    return this;
+};
+
+/**
+ * ADd object property assertion between two individuals.
+ * @param {string} individual1
+ * @param {string} objectProperty
+ * @param {string} individual2
+ * @returns {OwlTopology}
+ */
+OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, objectProperty, individual2) {
+    if (!this.hasNamedIndividual(individual1)) {
+        throw new Error('Individual ' + individual1 + ' does not exist in this ontology');
+    }
+    if (!this.hasNamedIndividual(individual2)) {
+        throw new Error('Individual ' + individual2 + ' does not exist in this ontology');
+    }
+    if (!this.hasObjectProperty(objectProperty)) {
+        throw new Error('ObjectProperty ' + objectProperty + ' does not exist in this ontology');
+    }
+
+    this.root.node('ObjectPropertyAssertion')
+        .node('ObjectProperty').attr({IRI: '#' + objectProperty}).parent()
+        .node('NamedIndividual').attr({IRI: '#' + individual1}).parent()
+        .node('NamedIndividual').attr({IRI: '#' + individual2});
+
     return this;
 };
 
@@ -114,9 +138,7 @@ OwlTopology.prototype.addNamedIndividual = function (className, name) {
  */
 OwlTopology.prototype.saveToFile = function (fileName) {
     var xml = this.doc.toString();
-    // xml = xml.replace(/&amp;rdf;/g, '&rdf;'); // simple hack, xmldom for some reason does no recognize &rdf;
     fs.writeFileSync(fileName, xml);
-
     return this;
 };
 
