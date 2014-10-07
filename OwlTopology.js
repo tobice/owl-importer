@@ -21,31 +21,61 @@ OwlTopology.prototype.loadFromFile = function (fileName) {
     this.root = this.doc.root();
 
     // Analyze ontology
-    this._classes = this.getClasses();
+    this._classes = this.getDeclarations('Class');
+    this._objectProperties = this.getDeclarations('ObjectProperty');
+    this._dataProperties = this.getDeclarations('DataProperty');
+    this._namedIndividuals = this.getDeclarations('NamedIndividual');
 
     return this;
 };
 
 /**
- * Get array of classes in the ontology
- * @returns {Array}
- */
-OwlTopology.prototype.getClasses = function () {
-    var nodes = this.doc.find('//ns:Declaration/ns:Class', OWL_NAMESPACE);
-    var classes = [];
-    _.each(nodes, function (node) {
-        classes.push(node.attr(IRI).value().replace('#', ''));
-    });
-    return classes;
-};
-
-/**
- * Return if topology contains given class.
- * @param className
+ * Returns true if topology contains given class.
+ * @param {string} className
  * @returns {boolean}
  */
 OwlTopology.prototype.hasClass = function (className) {
     return _.contains(this._classes, className);
+};
+
+/**
+ * Returns true if topology contains given object property.
+ * @param {string} objectPropertyName
+ * @returns {boolean}
+ */
+OwlTopology.prototype.hasObjectProperty = function (objectPropertyName) {
+    return _.contains(this._objectProperties, objectPropertyName);
+};
+
+/**
+ * Returns true if topology contains given data property.
+ * @param {string} dataPropertyName
+ * @returns {boolean}
+ */
+OwlTopology.prototype.hasDataProperty = function (dataPropertyName) {
+    return _.contains(this._dataProperties, dataPropertyName);
+};
+
+/**
+ * Returns true if topology contains given named individual.
+ * @param {string} namedIndividualName
+ * @returns {boolean}
+ */
+OwlTopology.prototype.hasNamedIndividual = function (namedIndividualName) {
+    return _.contains(this._namedIndividuals, namedIndividualName);
+};
+
+/**
+ * Get array of declared objects in the ontology by given type. Searches all
+ * <Declaration /> objects and returns an array of found IRIs.
+ * @param {string} declarationType
+ * @returns {*}
+ */
+OwlTopology.prototype.getDeclarations = function (declarationType) {
+    var nodes = this.doc.find('//ns:Declaration/ns:' + declarationType, OWL_NAMESPACE);
+    return _.map(nodes, function (node) {
+        return node.attr(IRI).value().replace('#', '');
+    });
 };
 
 /**
@@ -60,6 +90,10 @@ OwlTopology.prototype.addNamedIndividual = function (className, name) {
         throw new Error('There is no class ' + className + ' in this ontology');
     }
 
+    if (this.hasNamedIndividual(name)) {
+        throw new Error('Individual ' + name + ' already exists in this ontology');
+    }
+
     // Add declaration
     this.root.node('Declaration')
         .node('NamedIndividual').attr({IRI: '#' + name});
@@ -69,6 +103,7 @@ OwlTopology.prototype.addNamedIndividual = function (className, name) {
         .node('Class').attr({IRI: '#' + className}).parent()
         .node('NamedIndividual').attr({IRI: '#' + name});
 
+    this._namedIndividuals.push(name);
     return this;
 };
 
