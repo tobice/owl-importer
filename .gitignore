@@ -2,3 +2,4 @@
 node_modules
 .idea
 example_uib/*.owl
+example_uib/apikey.js
