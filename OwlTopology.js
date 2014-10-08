@@ -5,10 +5,14 @@ var Element = libxmljs.Element;
 
 // Namespace for Xpath search
 var OWL_NAMESPACE = {'ns': 'http://www.w3.org/2002/07/owl#'};
-var IRI = 'IRI';
 
 function OwlTopology () {
 }
+
+// Data types
+OwlTopology.TYPE_STRING = 'string';
+OwlTopology.TYPE_INT = 'int';
+OwlTopology.TYPE_DATETIME = 'dateTime';
 
 /**
  * Load OWL ontology from file
@@ -74,7 +78,7 @@ OwlTopology.prototype.hasNamedIndividual = function (namedIndividual) {
 OwlTopology.prototype.getDeclarations = function (declarationType) {
     var nodes = this.doc.find('//ns:Declaration/ns:' + declarationType, OWL_NAMESPACE);
     return _.map(nodes, function (node) {
-        return node.attr(IRI).value().replace('#', '');
+        return node.attr('IRI').value().replace('#', '');
     });
 };
 
@@ -106,7 +110,7 @@ OwlTopology.prototype.addNamedIndividual = function (className, individual) {
 };
 
 /**
- * ADd object property assertion between two individuals.
+ * Add object property assertion between two individuals.
  * @param {string} individual1
  * @param {string} objectProperty
  * @param {string} individual2
@@ -127,6 +131,30 @@ OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, object
         .node('ObjectProperty').attr({IRI: '#' + objectProperty}).parent()
         .node('NamedIndividual').attr({IRI: '#' + individual1}).parent()
         .node('NamedIndividual').attr({IRI: '#' + individual2});
+
+    return this;
+};
+
+/**
+ * Add data property assertion to an individual.
+ * @param {string} individual
+ * @param {string} dataProperty
+ * @param {string} type (TYPE_STRING|TYPE_INT|TYPE_DATETIME)
+ * @param {*} value
+ * @returns {OwlTopology}
+ */
+OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataProperty, type, value) {
+    if (!this.hasNamedIndividual(individual)) {
+        throw new Error('Individual ' + individual + ' does not exist in this ontology');
+    }
+    if (!this.hasDataProperty(dataProperty)) {
+        throw new Error('ObjectProperty ' + dataProperty + ' does not exist in this ontology');
+    }
+
+    this.root.node('DataPropertyAssertion')
+        .node('DataProperty').attr({IRI: '#' + dataProperty}).parent()
+        .node('NamedIndividual').attr({IRI: '#' + individual}).parent()
+        .node('Literal').attr({datatypeIRI: '#xsd;' + type}).text(value);
 
     return this;
 };
