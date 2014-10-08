@@ -1,5 +1,5 @@
 # Created by .gitignore support plugin (hsz.mobi)
 node_modules
 .idea
-pizza.owl
-pizza_copy.owl
+example_uib/pizza.owl
+example_uib/pizza_copy.owl

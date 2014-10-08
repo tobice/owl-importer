@@ -1,4 +1,4 @@
-var OwlTopology = require('./OwlTopology');
+var OwlTopology = require('./../OwlTopology');
 
 var owl = new OwlTopology().loadFromFile(process.argv[2] || 'pizza.owl');
 
