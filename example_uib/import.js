@@ -34,10 +34,26 @@ new Promise(function (resolve, reject) { resolve() })
                     return null;
                 }
 
+                // Add faculty to ontology if necessary
+                var faculty = owl.makeIRI(course.faknavn_engelsk);
+                if (!owl.hasNamedIndividual(faculty)) {
+                    owl.addNamedIndividual('Faculty', faculty);
+                    debug.info('Added faculty %s to ontology', faculty);
+                }
+
+                // Add institute to ontology if necessary
+                var institute = owl.makeIRI(course.instituttnavn_engelsk);
+                if (!owl.hasNamedIndividual(institute)) {
+                    owl.addNamedIndividual('Institute', institute);
+                    debug.info('Added institute %s to ontology', institute);
+                }
+
                 // Add course to ontology
                 owl.addNamedIndividual('Course', code);
                 owl.addDataPropertyAssertion(code, 'hasTitle', OwlTopology.TYPE_STRING, course.emnenavn_engelsk);
                 owl.addDataPropertyAssertion(code, 'hasCredits', OwlTopology.TYPE_INT, course.studiepoeng);
+                owl.addObjectPropertyAssertion(code, 'hasFaculty', faculty);
+                owl.addObjectPropertyAssertion(code, 'hasInstitute', institute);
                 debug.info('Course %s added to ontology', code);
                 return code;
             });
