@@ -26,30 +26,81 @@ new Promise(function (resolve, reject) { resolve() })
     .then(function() {
         debug.info('Fetching courses');
         return Promise.all(_.map(courses, function (code) {
-            return makeApiCall('basisinfo/emne/' + code + '/2014H').then(function (response) {
+            return makeApiCall('fs', 'basisinfo/emne/' + code + '/2014H').then(function (response) {
                 // Check if course was found
                 var course = response.body.emne;
                 if (!course) {
-                    debug.warning('Course not found. Api call: %s', response.request.url);
+                    debug.warning('Course %s not found', code);
                     return null;
                 }
 
                 // Add course to ontology
-                owl.addNamedIndividual('Course', course.emnekode);
-                owl.addDataPropertyAssertion(course.emnekode, 'hasTitle', OwlTopology.TYPE_STRING, course.emnenavn_engelsk);
-                owl.addDataPropertyAssertion(course.emnekode, 'hasCredits', OwlTopology.TYPE_INT, course.studiepoeng);
-                debug.info('Course %s added to ontology', course.emnekode);
-                return course.emnekode;
+                owl.addNamedIndividual('Course', code);
+                owl.addDataPropertyAssertion(code, 'hasTitle', OwlTopology.TYPE_STRING, course.emnenavn_engelsk);
+                owl.addDataPropertyAssertion(code, 'hasCredits', OwlTopology.TYPE_INT, course.studiepoeng);
+                debug.info('Course %s added to ontology', code);
+                return code;
             });
         }));
     })
-
     // Remove not found courses
     .then(_.compact)
 
     // Add timetable to ontology
     .then(function (courses) {
         debug.info('Fetching timetable');
+        return Promise.all(_.map(courses, function(code) {
+            return makeApiCall('timeplan', 'timeplanliste/now/' + code).then(function (response) {
+                // Check if timetable for the course was found
+                var entries = response.body.row;
+                if (!entries) {
+                    return debug.warning('No timetable found for course %s', code);
+                }
+
+                // Loop through individual course's classes
+                _.each(entries, function (entry) {
+                    // Parse description to get class type (Seminar|Lecture)
+                    var type = getClassType(entry.description);
+                    if (!type) {
+                        return debug.warning('Could not determine class type for course %s (description: %s), skipping', code, entry.description);
+                    }
+
+                    // Parse location to get room and building
+                    var location = getLocation(entry.rooms_string);
+                    if (!location) {
+                        debug.warning('Could not determine location for course %s (room_string: %s)', code, entry.rooms_string);
+                    } else {
+                        // Add room + building to ontology if necessary
+                        var room = owl.makeIRI(location.room);
+                        if (!owl.hasNamedIndividual(room)) {
+                            var building = owl.makeIRI(location.building);
+                            if (!owl.hasNamedIndividual(building)) {
+                                owl.addNamedIndividual('Building', building);
+                                debug.info('Added building %s to ontology', building);
+                            }
+
+                            owl.addNamedIndividual('Room', room);
+                            owl.addObjectPropertyAssertion(room, 'inBuilding', building);
+                            debug.info('Added room %s to ontology', room);
+                        }
+                    }
+
+                    // Loop through individual class dates
+                    var dates = (typeof entry.dates_iso.row == 'string') ? [entry.dates_iso.row] : entry.dates_iso.row;
+                    _.each(dates, function(date) {
+                        var event = owl.makeIRI(entry.name + ' ' + date);
+                        owl.addNamedIndividual(type, event); // type works here as a owl class (Seminar|Lecture)
+                        owl.addDataPropertyAssertion(event, 'hasDate', OwlTopology.TYPE_DATETIME, date + ' ' + getClassStart(entry.period) + ':00');
+                        owl.addDataPropertyAssertion(event, 'hasDuration', OwlTopology.TYPE_INT, entry.duration);
+                        if (room) {
+                            owl.addObjectPropertyAssertion(event, 'inRoom', room);
+                        }
+                    });
+                });
+
+                debug.info('Timetable for course %s added to topology', code);
+            });
+        }))
     })
 
     // Save ontology
@@ -62,8 +113,41 @@ new Promise(function (resolve, reject) { resolve() })
         debug.error(err);
     });
 
-function makeApiCall(action) {
-    var url = 'https://fs.data.uib.no/' + UIB_API_KEY + '/json/' + action;
-    debug.info("Making API call: %s", url);
+
+// some helping function
+
+function makeApiCall (source, action) {
+    var url = 'https://' + source + '.data.uib.no/' + UIB_API_KEY + '/json/' + action;
+    // debug.info("Making API call: %s", url);
     return request(url).promise();
+}
+
+function getClassType (description) {
+    if (description.match(/forelesning/i)) {
+        return 'Lecture';
+    }
+    if (description.match(/(seminar)|(lab)|(kurs)|(gruppe)/i)) {
+        return 'Seminar';
+    }
+    return null;
+}
+
+function getClassStart (period) {
+    return period.split('-')[0];
+}
+
+function getLocation (rooms_string) {
+    if (!rooms_string.split) {
+        return null;
+    }
+
+    var parts = rooms_string.split(',');
+    if (parts.length != 2) {
+        return null;
+    }
+
+    return {
+        building: parts[0].trim(),
+        room: parts[1].trim()
+    }
 }

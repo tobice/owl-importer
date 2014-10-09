@@ -84,7 +84,7 @@ OwlTopology.prototype.getDeclarations = function (declarationType) {
 
 /**
  * Add named individual.
- * @param {string} className
+ * @param {string} className (must be a valid IRI)
  * @param {string} individual
  * @returns {OwlTopology}
  */
@@ -94,6 +94,9 @@ OwlTopology.prototype.addNamedIndividual = function (className, individual) {
     }
     if (this.hasNamedIndividual(individual)) {
         throw new Error('Individual ' + individual + ' already exists in this ontology');
+    }
+    if (!this.isIRI(individual)) {
+        throw new Error(individual + ' is not a valid IRI a therefore cannot be added to ontology');
     }
 
     // Add declaration
@@ -160,6 +163,28 @@ OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataPrope
 };
 
 /**
+ * Transform input string into valid IRI. Replaces spaces by underscore and
+ * removes all characters except for number and letters of english alphabet
+ * (+ special norwegian letters are allowed).
+ * @param {string} str
+ * @returns {string}
+ */
+OwlTopology.prototype.makeIRI = function (str) {
+    // TODO: this should really follow RFC 3987
+    return str.replace(/ /g, '_').replace(/[^A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]/g, '');
+};
+
+/**
+ * Return true if input string is valid IRI.
+ * @param {string} str
+ * @returns {boolean}
+ */
+OwlTopology.prototype.isIRI = function (str) {
+    // TODO: this should really follow RFC 3987
+    return str.match(/^[A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]+$/) !== null;
+};
+
+/**
  * Save ontology to a file.
  * @param {string} fileName
  * @returns {OwlTopology}
@@ -169,5 +194,7 @@ OwlTopology.prototype.saveToFile = function (fileName) {
     fs.writeFileSync(fileName, xml);
     return this;
 };
+
+
 
 module.exports = OwlTopology;
