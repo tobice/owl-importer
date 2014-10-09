@@ -111,6 +111,9 @@ new Promise(function (resolve, reject) { resolve() })
                         if (room) {
                             owl.addObjectPropertyAssertion(event, 'inRoom', room);
                         }
+
+                        // Attach event to course
+                        owl.addObjectPropertyAssertion(code, 'hasClass', event);
                     });
                 });
 
