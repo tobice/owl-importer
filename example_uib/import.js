@@ -2,7 +2,8 @@ var request = require('superagent');
 var _ = require('lodash');
 var Promise = require('bluebird');
 var OwlTopology = require('./../OwlTopology');
-var UIB_API_KEY = require('./apikey.js');
+var UIB_API_KEY = require('./apikey');
+var staticdata = require('./staticdata');
 
 // Setup nice debug output
 process.env.DEBUG = process.env.DEBUG || 'error,warning';
@@ -16,11 +17,11 @@ debug.error.log = console.error.bind(console);
 // Promisify superagent
 require('superagent-bluebird-promise');
 
-var courses = 'EXPHIL-SVSEM EXPHIL-SVEKS INFO100 SV100 AORG100 ECON100 GEO100 GLOB101 MEVI100 SAMPOL100 SOS100 SANT100 POLØK100 INFO132 INFO102 INFO103 INFO110 INFO115 INFO116 INFO125 INFO216 INFO233 INFO262 INFO232 INFO282 INFO207 INFO212 INF207'.split(' ');
+var courses = _.keys(staticdata.courses);
 var owl = new OwlTopology().loadFromFile(process.argv[2] || 'UibOntology.owl');
 debug.info('Ontology successfully loaded');
 
-new Promise(function (resolve, reject) { resolve() })
+new Promise(function (resolve) { resolve() })
 
     // Add courses to ontology
     .then(function() {
@@ -37,7 +38,8 @@ new Promise(function (resolve, reject) { resolve() })
                 // Add faculty to ontology if necessary
                 var faculty = owl.makeIRI(course.faknavn_engelsk);
                 if (!owl.hasNamedIndividual(faculty)) {
-                    owl.addNamedIndividual('Faculty', faculty);
+                    owl.addNamedIndividual('Faculty', faculty)
+                        .addLabel(faculty, course.faknavn_engelsk);
                     debug.info('Added faculty %s to ontology', faculty);
                 }
 
@@ -45,22 +47,110 @@ new Promise(function (resolve, reject) { resolve() })
                 var institute = owl.makeIRI(course.instituttnavn_engelsk);
                 if (!owl.hasNamedIndividual(institute)) {
                     owl.addNamedIndividual('Institute', institute);
+                    owl.addLabel(institute, course.instituttnavn_engelsk);
                     debug.info('Added institute %s to ontology', institute);
                 }
 
                 // Add course to ontology
-                owl.addNamedIndividual('Course', code);
-                owl.addDataPropertyAssertion(code, 'hasTitle', OwlTopology.TYPE_STRING, course.emnenavn_engelsk);
-                owl.addDataPropertyAssertion(code, 'hasCredits', OwlTopology.TYPE_INT, course.studiepoeng);
-                owl.addObjectPropertyAssertion(code, 'hasFaculty', faculty);
-                owl.addObjectPropertyAssertion(code, 'hasInstitute', institute);
+                owl.addNamedIndividual('Course', code)
+                    .addDataPropertyAssertion(code, 'hasTitle', OwlTopology.TYPE_STRING, course.emnenavn_engelsk)
+                    .addDataPropertyAssertion(code, 'hasCredits', OwlTopology.TYPE_INT, course.studiepoeng)
+                    .addObjectPropertyAssertion(code, 'atFaculty', faculty)
+                    .addObjectPropertyAssertion(code, 'atInstitute', institute);
                 debug.info('Course %s added to ontology', code);
                 return code;
             });
         }));
     })
-    // Remove not found courses
+    // Remove courses that were not found
     .then(_.compact)
+
+    // Add static data to ontology
+    .then(function (courses) {
+
+        // Add degree
+        var degree = staticdata.degree.code;
+        owl.addNamedIndividual('Degree', degree)
+            .addDataPropertyAssertion(degree, 'hasTitle', OwlTopology.TYPE_STRING, staticdata.degree.title)
+            .addDataPropertyAssertion(degree, 'hasDuration', OwlTopology.TYPE_INT, staticdata.degree.duration)
+            .addDataPropertyAssertion(degree, 'hasCredits', OwlTopology.TYPE_INT, staticdata.degree.credits);
+        debug.info('Degree added to ontology');
+
+        // Add subject areas
+        _.each(staticdata.subjectAreaClasses, function (areas, className) {
+            _.each(areas, function (area) {
+                var iri = owl.makeIRI(area);
+                owl.addNamedIndividual(className, iri)
+                    .addLabel(iri, area);
+                debug.info('Subject area %s added to ontology', area)
+            });
+        });
+
+        // Add extra static information to courses
+        _.each(courses, function (course) {
+            var data = staticdata.courses[course];
+            if (!data) {
+                debug.warn('No static data for course %s', course);
+                return;
+            }
+
+            owl.addDataPropertyAssertion(course, 'hasDescription', OwlTopology.TYPE_STRING, data.description)
+                .addDataPropertyAssertion(course, 'hasSuggestedSemester', OwlTopology.TYPE_INT, data.suggestedSemester)
+                .addDataPropertyAssertion(course, 'hasContactEmail', OwlTopology.TYPE_STRING, data.contact);
+
+            // Prerequisite courses
+            _.each(data.prereq, function(prereq) {
+                owl.addObjectPropertyAssertion(course, 'hasPrerequisiteCourse', prereq);
+            });
+
+            // Overlapping courses
+            _.each(data.overlapping, function (overlapping) {
+                overlapping = owl.makeIRI(overlapping);
+                if (!owl.hasNamedIndividual(overlapping)) {
+                    debug.warning('%s is overlapping with %s that does not exist in the ontology', course, overlapping);
+                    return;
+                }
+                owl.addObjectPropertyAssertion(course, 'hasOverlappingCredits', overlapping);
+            });
+
+            // Subject areas covered by this course
+            _.each(data.covers, function (subjectArea) {
+                subjectArea = owl.makeIRI(subjectArea);
+                if (!owl.hasNamedIndividual(subjectArea)) {
+                    debug.warning('Subject area %s does not exist in the ontology, skipping', subjectArea);
+                    return;
+                }
+               owl.addObjectPropertyAssertion(course, 'coversSubjectArea', subjectArea);
+            });
+
+            // Exam
+            if (data.exam) {
+                var exam = owl.makeIRI(course + ' Exam');
+                owl.addNamedIndividual('Exam', exam)
+                    .addLabel(exam, course + ' Exam')
+                    .addDataPropertyAssertion(exam, 'hasDate', OwlTopology.TYPE_DATETIME, data.exam + ':00')
+                    .addObjectPropertyAssertion(course, 'hasExam', exam);
+            }
+
+            // Add to degree
+            switch (data.mandatory) {
+                case 'mandatory':
+                    owl.addObjectPropertyAssertion(degree, 'hasMandatoryCourse', course);
+                    break;
+                case 'optional':
+                    owl.addObjectPropertyAssertion(degree, 'hasOptionalCourse', course);
+                    break;
+                case 'optionalMandatory':
+                    owl.addObjectPropertyAssertion(degree, 'hasOptionalMandatoryCourse', course);
+                    break;
+                default:
+                    debug.warning('Unknown mandatory value %s for course %s', data.mandatory, course);
+            }
+
+            debug.info('Static info for course %s added to topology', course);
+        });
+        return courses;
+    })
 
     // Add timetable to ontology
     .then(function (courses) {
@@ -75,7 +165,7 @@ new Promise(function (resolve, reject) { resolve() })
 
                 // Loop through individual course's classes
                 _.each(entries, function (entry) {
-                    // Parse description to get class type (Seminar|Lecture)
+                    // Parse description to get class type (Seminar|Lecture|AmbigousClass)
                     var type = getClassType(entry.description);
                     if (!type) {
                         return debug.warning('Could not determine class type for course %s (description: %s), skipping', code, entry.description);
@@ -91,12 +181,14 @@ new Promise(function (resolve, reject) { resolve() })
                         if (!owl.hasNamedIndividual(room)) {
                             var building = owl.makeIRI(location.building);
                             if (!owl.hasNamedIndividual(building)) {
-                                owl.addNamedIndividual('Building', building);
+                                owl.addNamedIndividual('Building', building)
+                                    .addLabel(building, location.building);
                                 debug.info('Added building %s to ontology', building);
                             }
 
-                            owl.addNamedIndividual('Room', room);
-                            owl.addObjectPropertyAssertion(room, 'inBuilding', building);
+                            owl.addNamedIndividual('Room', room)
+                                .addObjectPropertyAssertion(room, 'inBuilding', building)
+                                .addLabel(room, location.room);
                             debug.info('Added room %s to ontology', room);
                         }
                     }
@@ -105,9 +197,10 @@ new Promise(function (resolve, reject) { resolve() })
                     var dates = (typeof entry.dates_iso.row == 'string') ? [entry.dates_iso.row] : entry.dates_iso.row;
                     _.each(dates, function(date) {
                         var event = owl.makeIRI(entry.name + ' ' + date);
-                        owl.addNamedIndividual(type, event); // type works here as a owl class (Seminar|Lecture)
-                        owl.addDataPropertyAssertion(event, 'hasDate', OwlTopology.TYPE_DATETIME, date + ' ' + getClassStart(entry.period) + ':00');
-                        owl.addDataPropertyAssertion(event, 'hasDuration', OwlTopology.TYPE_INT, entry.duration);
+                        owl.addNamedIndividual(type, event) // type works here as an owl class (Seminar|Lecture|AmbiguousClass)
+                            .addLabel(event, entry.name)
+                            .addDataPropertyAssertion(event, 'hasDate', OwlTopology.TYPE_DATETIME, date + ' ' + getClassStart(entry.period) + ':00')
+                            .addDataPropertyAssertion(event, 'hasDuration', OwlTopology.TYPE_INT, entry.duration);
                         if (room) {
                             owl.addObjectPropertyAssertion(event, 'inRoom', room);
                         }
@@ -145,10 +238,10 @@ function getClassType (description) {
     if (description.match(/forelesning/i)) {
         return 'Lecture';
     }
-    if (description.match(/(seminar)|(lab)|(kurs)|(gruppe)/i)) {
+    if (description.match(/(seminar)|(lab)|(kurs)|(gruppe)|(SV)/i)) {
         return 'Seminar';
     }
-    return null;
+    return 'AmbiguousClass';
 }
 
 function getClassStart (period) {

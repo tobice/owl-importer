@@ -163,6 +163,31 @@ OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataPrope
 };
 
 /**
+ * Add annotation property assertion to an individual.
+ * @param {string} individual - Valid IRI of an individual in the ontology
+ * @param {string} annotationProperty - i. e. "rdfs:label"
+ * @param {string} type - datatype, i. e. "PlainLiteral"
+ * @param {string} value
+ */
+OwlTopology.prototype.addAnnotationAssertion = function (individual, annotationProperty, type, value) {
+    if (!this.hasNamedIndividual(individual)) {
+        throw new Error('Individual ' + individual + ' does not exist in this ontology');
+    }
+
+    this.root.node('AnnotationAssertion')
+        .node('AnnotationProperty').attr({abbreviatedIRI: annotationProperty}).parent()
+        .node('IRI').text('#' + individual).parent()
+        .node('Literal').attr({datatypeIRI: '&rdf;' + type}).text(value);
+
+    return this;
+};
+
+OwlTopology.prototype.addLabel = function (individual, label) {
+    this.addAnnotationAssertion(individual, 'rdfs:label', 'PlainLiteral', label);
+    return this;
+};
+
+/**
  * Transform input string into valid IRI. Replaces spaces by underscore and
  * removes all characters except for number and letters of english alphabet
  * (+ special norwegian letters are allowed).
