@@ -217,7 +217,7 @@ new Promise(function (resolve) { resolve() })
 
     // Save ontology
     .then(function () {
-        owl.saveToFile('UibOntologyPopulated.owl');
+        owl.saveToFile(process.argv[3] || 'UibOntologyPopulated.owl');
         debug.info('Ontology saved to file');
     })
 
