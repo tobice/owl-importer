@@ -86,16 +86,17 @@ OwlTopology.prototype.getDeclarations = function (declarationType) {
  * Add named individual.
  * @param {string} className (must be a valid IRI)
  * @param {string} individual
+ * @param {boolean=} ignoreWarnings
  * @returns {OwlTopology}
  */
-OwlTopology.prototype.addNamedIndividual = function (className, individual) {
-    if (!this.hasClass(className)) {
+OwlTopology.prototype.addNamedIndividual = function (className, individual, ignoreWarnings) {
+    if (!this.hasClass(className) && !ignoreWarnings) {
         throw new Error('There is no class ' + className + ' in this ontology');
     }
-    if (this.hasNamedIndividual(individual)) {
+    if (this.hasNamedIndividual(individual) && !ignoreWarnings) {
         throw new Error('Individual ' + individual + ' already exists in this ontology');
     }
-    if (!this.isIRI(individual)) {
+    if (!this.isIRI(individual) && !ignoreWarnings) {
         throw new Error(individual + ' is not a valid IRI a therefore cannot be added to ontology');
     }
 
@@ -117,16 +118,17 @@ OwlTopology.prototype.addNamedIndividual = function (className, individual) {
  * @param {string} individual1
  * @param {string} objectProperty
  * @param {string} individual2
+ * @param {boolean=} ignoreWarnings
  * @returns {OwlTopology}
  */
-OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, objectProperty, individual2) {
-    if (!this.hasNamedIndividual(individual1)) {
+OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, objectProperty, individual2, ignoreWarnings) {
+    if (!this.hasNamedIndividual(individual1) && !ignoreWarnings) {
         throw new Error('Individual ' + individual1 + ' does not exist in this ontology');
     }
-    if (!this.hasNamedIndividual(individual2)) {
+    if (!this.hasNamedIndividual(individual2) && !ignoreWarnings) {
         throw new Error('Individual ' + individual2 + ' does not exist in this ontology');
     }
-    if (!this.hasObjectProperty(objectProperty)) {
+    if (!this.hasObjectProperty(objectProperty) && !ignoreWarnings) {
         throw new Error('ObjectProperty ' + objectProperty + ' does not exist in this ontology');
     }
 
@@ -144,13 +146,14 @@ OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, object
  * @param {string} dataProperty
  * @param {string} type (TYPE_STRING|TYPE_INT|TYPE_DATETIME)
  * @param {*} value
+ * @param {boolean=} ignoreWarnings
  * @returns {OwlTopology}
  */
-OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataProperty, type, value) {
-    if (!this.hasNamedIndividual(individual)) {
+OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataProperty, type, value, ignoreWarnings) {
+    if (!this.hasNamedIndividual(individual) && !ignoreWarnings) {
         throw new Error('Individual ' + individual + ' does not exist in this ontology');
     }
-    if (!this.hasDataProperty(dataProperty)) {
+    if (!this.hasDataProperty(dataProperty) && !ignoreWarnings) {
         throw new Error('ObjectProperty ' + dataProperty + ' does not exist in this ontology');
     }
 
@@ -168,9 +171,10 @@ OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataPrope
  * @param {string} annotationProperty - i. e. "rdfs:label"
  * @param {string} type - datatype, i. e. "PlainLiteral"
  * @param {string} value
+ * @param {boolean=} ignoreWarnings
  */
-OwlTopology.prototype.addAnnotationAssertion = function (individual, annotationProperty, type, value) {
-    if (!this.hasNamedIndividual(individual)) {
+OwlTopology.prototype.addAnnotationAssertion = function (individual, annotationProperty, type, value, ignoreWarnings) {
+    if (!this.hasNamedIndividual(individual) && !ignoreWarnings) {
         throw new Error('Individual ' + individual + ' does not exist in this ontology');
     }
 
