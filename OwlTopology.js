@@ -220,6 +220,7 @@ OwlTopology.prototype.isIRI = function (str) {
  */
 OwlTopology.prototype.saveToFile = function (fileName) {
     var xml = this.doc.toString();
+    xml = xml.replace(/&amp;rdf;/g, '&rdf;');
     fs.writeFileSync(fileName, xml);
     return this;
 };

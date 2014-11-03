@@ -111,7 +111,7 @@ new Promise(function (resolve) { resolve() })
 
             // Prerequisite courses
             _.each(data.prereq, function(prereq) {
-                owl.addObjectPropertyAssertion(course, '#hasPrerequisiteCourse', prereq, true);
+                owl.addObjectPropertyAssertion(course, '#hasPrerequisiteCourse', owl.makeIRI(prereq), true);
             });
 
             // Overlapping courses
