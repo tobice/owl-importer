@@ -78,7 +78,7 @@ OwlTopology.prototype.hasNamedIndividual = function (namedIndividual) {
 OwlTopology.prototype.getDeclarations = function (declarationType) {
     var nodes = this.doc.find('//ns:Declaration/ns:' + declarationType, OWL_NAMESPACE);
     return _.map(nodes, function (node) {
-        return node.attr('IRI').value().replace('#', '');
+        return node.attr('IRI').value();
     });
 };
 
@@ -102,12 +102,12 @@ OwlTopology.prototype.addNamedIndividual = function (className, individual, igno
 
     // Add declaration
     this.root.node('Declaration')
-        .node('NamedIndividual').attr({IRI: '#' + individual});
+        .node('NamedIndividual').attr({IRI: individual});
 
     // Add class assertion
     this.root.node('ClassAssertion')
-        .node('Class').attr({IRI: '#' + className}).parent()
-        .node('NamedIndividual').attr({IRI: '#' + individual});
+        .node('Class').attr({IRI: className}).parent()
+        .node('NamedIndividual').attr({IRI: individual});
 
     this._namedIndividuals.push(individual);
     return this;
@@ -133,9 +133,9 @@ OwlTopology.prototype.addObjectPropertyAssertion = function (individual1, object
     }
 
     this.root.node('ObjectPropertyAssertion')
-        .node('ObjectProperty').attr({IRI: '#' + objectProperty}).parent()
-        .node('NamedIndividual').attr({IRI: '#' + individual1}).parent()
-        .node('NamedIndividual').attr({IRI: '#' + individual2});
+        .node('ObjectProperty').attr({IRI: objectProperty}).parent()
+        .node('NamedIndividual').attr({IRI: individual1}).parent()
+        .node('NamedIndividual').attr({IRI: individual2});
 
     return this;
 };
@@ -158,8 +158,8 @@ OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataPrope
     }
 
     this.root.node('DataPropertyAssertion')
-        .node('DataProperty').attr({IRI: '#' + dataProperty}).parent()
-        .node('NamedIndividual').attr({IRI: '#' + individual}).parent()
+        .node('DataProperty').attr({IRI: dataProperty}).parent()
+        .node('NamedIndividual').attr({IRI: individual}).parent()
         .node('Literal').attr({datatypeIRI: '#xsd;' + type}).text(value);
 
     return this;
@@ -180,7 +180,7 @@ OwlTopology.prototype.addAnnotationAssertion = function (individual, annotationP
 
     this.root.node('AnnotationAssertion')
         .node('AnnotationProperty').attr({abbreviatedIRI: annotationProperty}).parent()
-        .node('IRI').text('#' + individual).parent()
+        .node('IRI').text(individual).parent()
         .node('Literal').attr({datatypeIRI: '&rdf;' + type}).text(value);
 
     return this;
@@ -200,7 +200,7 @@ OwlTopology.prototype.addLabel = function (individual, label) {
  */
 OwlTopology.prototype.makeIRI = function (str) {
     // TODO: this should really follow RFC 3987
-    return str.replace(/ /g, '_').replace(/[^A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]/g, '');
+    return '#' + str.replace(/ /g, '_').replace(/[^A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]/g, '');
 };
 
 /**
@@ -210,7 +210,7 @@ OwlTopology.prototype.makeIRI = function (str) {
  */
 OwlTopology.prototype.isIRI = function (str) {
     // TODO: this should really follow RFC 3987
-    return str.match(/^[A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]+$/) !== null;
+    return str.match(/^#[A-Za-z0-9æÆäÄøØöÖåÅ_\-\(\)]+$/) !== null;
 };
 
 /**
