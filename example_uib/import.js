@@ -1,9 +1,18 @@
+var moment = require('moment');
 var request = require('superagent');
 var _ = require('lodash');
 var Promise = require('bluebird');
 var OwlTopology = require('./../OwlTopology');
 var UIB_API_KEY = require('./apikey');
 var staticdata = require('./staticdata');
+
+// Schema.org classes and properties
+SCHEMA_Place = 'http://schema.org/Place';
+SCHEMA_Event = 'http://schema.org/Event';
+SCHEMA_event = 'http://schema.org/event';
+SCHEMA_location = 'http://schema.org/location';
+SCHEMA_duration = 'http://schema.org/duration';
+SCHEMA_startDate = 'http://schema.org/startDate';
 
 // Setup nice debug output
 process.env.DEBUG = process.env.DEBUG || 'error,warning';
@@ -128,7 +137,7 @@ new Promise(function (resolve) { resolve() })
                 var exam = owl.makeIRI(course + ' Exam');
                 owl.addNamedIndividual('Exam', exam)
                     .addLabel(exam, course + ' Exam')
-                    .addDataPropertyAssertion(exam, 'hasDate', OwlTopology.TYPE_DATETIME, data.exam + ':00')
+                    .addDataPropertyAssertion(exam, SCHEMA_startDate, OwlTopology.TYPE_DATETIME, makeDate(data.exam))
                     .addObjectPropertyAssertion(course, 'hasExam', exam);
             }
 
@@ -199,8 +208,8 @@ new Promise(function (resolve) { resolve() })
                         var event = owl.makeIRI(entry.name + ' ' + date);
                         owl.addNamedIndividual(type, event) // type works here as an owl class (Seminar|Lecture|AmbiguousClass)
                             .addLabel(event, entry.name)
-                            .addDataPropertyAssertion(event, 'hasDate', OwlTopology.TYPE_DATETIME, date + ' ' + getClassStart(entry.period) + ':00')
-                            .addDataPropertyAssertion(event, 'hasDuration', OwlTopology.TYPE_INT, entry.duration);
+                            .addDataPropertyAssertion(event, SCHEMA_startDate, OwlTopology.TYPE_DATETIME, makeDate(date + ' ' + getClassStart(entry.period)))
+                            .addDataPropertyAssertion(event, SCHEMA_duration, OwlTopology.TYPE_INT, makeDuration(entry.duration));
                         if (room) {
                             owl.addObjectPropertyAssertion(event, 'inRoom', room);
                         }
@@ -262,4 +271,14 @@ function getLocation (rooms_string) {
         building: parts[0].trim(),
         room: parts[1].trim()
     }
+}
+
+function makeDuration(duration) {
+    // ISO 8601
+    return moment.unix(duration).utc().format('[PT]H[H]m[M]');
+}
+
+function makeDate(date) {
+    // ISO 8601
+    return moment(date).format();
 }

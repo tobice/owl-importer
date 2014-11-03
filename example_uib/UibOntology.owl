@@ -22,6 +22,12 @@
     <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
     <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
     <Declaration>
+        <Class IRI="http://schema.org/Event"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="http://schema.org/Place"/>
+    </Declaration>
+    <Declaration>
         <Class IRI="#AmbiguousClass"/>
     </Declaration>
     <Declaration>
@@ -46,9 +52,6 @@
         <Class IRI="#Economy"/>
     </Declaration>
     <Declaration>
-        <Class IRI="#Event"/>
-    </Declaration>
-    <Declaration>
         <Class IRI="#Exam"/>
     </Declaration>
     <Declaration>
@@ -62,9 +65,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="#Lecture"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="#Location"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Logic"/>
@@ -100,13 +100,16 @@
         <Class IRI="#SubjectArea"/>
     </Declaration>
     <Declaration>
+        <ObjectProperty IRI="http://schema.org/event"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="http://schema.org/location"/>
+    </Declaration>
+    <Declaration>
         <ObjectProperty IRI="#atFaculty"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#atInstitute"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#atLocation"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#coversSubjectArea"/>
@@ -119,9 +122,6 @@
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#hasCourse"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="#hasEvent"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="#hasExam"/>
@@ -154,13 +154,16 @@
         <ObjectProperty IRI="#inRoom"/>
     </Declaration>
     <Declaration>
+        <DataProperty IRI="http://schema.org/duration"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="http://schema.org/startDate"/>
+    </Declaration>
+    <Declaration>
         <DataProperty IRI="#hasContactEmail"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#hasCredits"/>
-    </Declaration>
-    <Declaration>
-        <DataProperty IRI="#hasDate"/>
     </Declaration>
     <Declaration>
         <DataProperty IRI="#hasDescription"/>
@@ -183,7 +186,7 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Building"/>
-        <Class IRI="#Location"/>
+        <Class IRI="http://schema.org/Place"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Business"/>
@@ -191,7 +194,7 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Class"/>
-        <Class IRI="#Event"/>
+        <Class IRI="http://schema.org/Event"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#ComputerScience"/>
@@ -203,7 +206,7 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Exam"/>
-        <Class IRI="#Event"/>
+        <Class IRI="http://schema.org/Event"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Geography"/>
@@ -243,7 +246,7 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Room"/>
-        <Class IRI="#Location"/>
+        <Class IRI="http://schema.org/Place"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#Seminar"/>
@@ -263,11 +266,11 @@
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#hasClass"/>
-        <ObjectProperty IRI="#hasEvent"/>
+        <ObjectProperty IRI="http://schema.org/event"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#hasExam"/>
-        <ObjectProperty IRI="#hasEvent"/>
+        <ObjectProperty IRI="http://schema.org/event"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#hasLecture"/>
@@ -295,12 +298,28 @@
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#inBuilding"/>
-        <ObjectProperty IRI="#atLocation"/>
+        <ObjectProperty IRI="http://schema.org/location"/>
     </SubObjectPropertyOf>
     <SubObjectPropertyOf>
         <ObjectProperty IRI="#inRoom"/>
-        <ObjectProperty IRI="#atLocation"/>
+        <ObjectProperty IRI="http://schema.org/location"/>
     </SubObjectPropertyOf>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="http://schema.org/event"/>
+        <Class IRI="#Course"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="http://schema.org/location"/>
+        <Class IRI="http://schema.org/Event"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="http://schema.org/location"/>
+        <Class IRI="#Faculty"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="http://schema.org/location"/>
+        <Class IRI="#Institute"/>
+    </ObjectPropertyDomain>
     <ObjectPropertyDomain>
         <ObjectProperty IRI="#atFaculty"/>
         <Class IRI="#Course"/>
@@ -318,19 +337,15 @@
         <Class IRI="#Faculty"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
-        <ObjectProperty IRI="#atLocation"/>
-        <Class IRI="#Event"/>
-    </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
-        <ObjectProperty IRI="#atLocation"/>
-        <Class IRI="#Faculty"/>
-    </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
-        <ObjectProperty IRI="#atLocation"/>
-        <Class IRI="#Institute"/>
-    </ObjectPropertyDomain>
-    <ObjectPropertyDomain>
         <ObjectProperty IRI="#coversSubjectArea"/>
+        <Class IRI="#Course"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#hasAmbigousClass"/>
+        <Class IRI="#Course"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#hasClass"/>
         <Class IRI="#Course"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
@@ -338,7 +353,11 @@
         <Class IRI="#Degree"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
-        <ObjectProperty IRI="#hasEvent"/>
+        <ObjectProperty IRI="#hasExam"/>
+        <Class IRI="#Course"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#hasLecture"/>
         <Class IRI="#Course"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
@@ -350,13 +369,25 @@
         <Class IRI="#Course"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
+        <ObjectProperty IRI="#hasSeminar"/>
+        <Class IRI="#Course"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
         <ObjectProperty IRI="#inBuilding"/>
         <Class IRI="#Room"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
         <ObjectProperty IRI="#inRoom"/>
-        <Class IRI="#Event"/>
+        <Class IRI="http://schema.org/Event"/>
     </ObjectPropertyDomain>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="http://schema.org/event"/>
+        <Class IRI="http://schema.org/Event"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="http://schema.org/location"/>
+        <Class IRI="http://schema.org/Place"/>
+    </ObjectPropertyRange>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#atFaculty"/>
         <Class IRI="#Faculty"/>
@@ -366,20 +397,12 @@
         <Class IRI="#Institute"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
-        <ObjectProperty IRI="#atLocation"/>
-        <Class IRI="#Location"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
         <ObjectProperty IRI="#coversSubjectArea"/>
         <Class IRI="#SubjectArea"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#hasCourse"/>
         <Class IRI="#Course"/>
-    </ObjectPropertyRange>
-    <ObjectPropertyRange>
-        <ObjectProperty IRI="#hasEvent"/>
-        <Class IRI="#Event"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
         <ObjectProperty IRI="#hasOverlappingCredits"/>
@@ -401,6 +424,18 @@
         <DataProperty IRI="#hasDescription"/>
         <DataProperty abbreviatedIRI="owl:topDataProperty"/>
     </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#hasDuration"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <DataPropertyDomain>
+        <DataProperty IRI="http://schema.org/duration"/>
+        <Class IRI="http://schema.org/Event"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="http://schema.org/startDate"/>
+        <Class IRI="http://schema.org/Event"/>
+    </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#hasContactEmail"/>
         <Class IRI="#Course"/>
@@ -414,16 +449,12 @@
         <Class IRI="#Degree"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
-        <DataProperty IRI="#hasDate"/>
-        <Class IRI="#Event"/>
-    </DataPropertyDomain>
-    <DataPropertyDomain>
         <DataProperty IRI="#hasDescription"/>
         <Class IRI="#Course"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#hasDuration"/>
-        <Class IRI="#Event"/>
+        <Class IRI="#Degree"/>
     </DataPropertyDomain>
     <DataPropertyDomain>
         <DataProperty IRI="#hasSuggestedSemester"/>
@@ -450,16 +481,20 @@
         <Class IRI="#Faculty"/>
     </DataPropertyDomain>
     <DataPropertyRange>
+        <DataProperty IRI="http://schema.org/duration"/>
+        <Datatype abbreviatedIRI="xsd:int"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="http://schema.org/startDate"/>
+        <Datatype abbreviatedIRI="xsd:dateTime"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
         <DataProperty IRI="#hasContactEmail"/>
         <Datatype abbreviatedIRI="xsd:string"/>
     </DataPropertyRange>
     <DataPropertyRange>
         <DataProperty IRI="#hasCredits"/>
         <Datatype abbreviatedIRI="xsd:int"/>
-    </DataPropertyRange>
-    <DataPropertyRange>
-        <DataProperty IRI="#hasDate"/>
-        <Datatype abbreviatedIRI="xsd:dateTime"/>
     </DataPropertyRange>
     <DataPropertyRange>
         <DataProperty IRI="#hasDescription"/>
