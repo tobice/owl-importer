@@ -160,7 +160,7 @@ OwlTopology.prototype.addDataPropertyAssertion = function (individual, dataPrope
     this.root.node('DataPropertyAssertion')
         .node('DataProperty').attr({IRI: dataProperty}).parent()
         .node('NamedIndividual').attr({IRI: individual}).parent()
-        .node('Literal').attr({datatypeIRI: '#xsd;' + type}).text(value);
+        .node('Literal').attr({datatypeIRI: '&xsd;' + type}).text(value);
 
     return this;
 };
@@ -221,6 +221,7 @@ OwlTopology.prototype.isIRI = function (str) {
 OwlTopology.prototype.saveToFile = function (fileName) {
     var xml = this.doc.toString();
     xml = xml.replace(/&amp;rdf;/g, '&rdf;');
+    xml = xml.replace(/&amp;xsd;/g, '&xsd;');
     fs.writeFileSync(fileName, xml);
     return this;
 };

@@ -98,6 +98,7 @@ new Promise(function (resolve) { resolve() })
 
         // Add extra static information to courses
         _.each(courses, function (course) {
+            var code = course;
             var data = staticdata.courses[course];
             if (!data) {
                 debug.warn('No static data for course %s', course);
@@ -106,7 +107,7 @@ new Promise(function (resolve) { resolve() })
 
             course = owl.makeIRI(course);
             owl.addDataPropertyAssertion(course, '#hasDescription', OwlTopology.TYPE_STRING, data.description)
-                .addDataPropertyAssertion(course, '#hasSuggestedSemester', OwlTopology.TYPE_INT, data.suggestedSemester)
+                .addDataPropertyAssertion(course, '#hasSuggestedSemester', OwlTopology.TYPE_STRING, data.suggestedSemester)
                 .addDataPropertyAssertion(course, '#hasContactEmail', OwlTopology.TYPE_STRING, data.contact);
 
             // Prerequisite courses
@@ -136,9 +137,9 @@ new Promise(function (resolve) { resolve() })
 
             // Exam
             if (data.exam) {
-                var exam = owl.makeIRI(course + ' Exam');
+                var exam = owl.makeIRI(code + ' Exam');
                 owl.addNamedIndividual('#Exam', exam)
-                    .addLabel(exam, course + ' Exam')
+                    .addLabel(exam, code + ' Exam')
                     .addDataPropertyAssertion(exam, SCHEMA_startDate, OwlTopology.TYPE_DATETIME, makeDate(data.exam))
                     .addObjectPropertyAssertion(course, '#hasExam', exam);
             }
@@ -211,7 +212,7 @@ new Promise(function (resolve) { resolve() })
                         owl.addNamedIndividual('#' + type, event) // type works here as an owl class (Seminar|Lecture|AmbiguousClass)
                             .addLabel(event, entry.name)
                             .addDataPropertyAssertion(event, SCHEMA_startDate, OwlTopology.TYPE_DATETIME, makeDate(date + ' ' + getClassStart(entry.period)))
-                            .addDataPropertyAssertion(event, SCHEMA_duration, OwlTopology.TYPE_INT, makeDuration(entry.duration));
+                            .addDataPropertyAssertion(event, SCHEMA_duration, OwlTopology.TYPE_STRING, makeDuration(entry.duration));
                         if (room) {
                             owl.addObjectPropertyAssertion(event, '#inRoom', room);
                         }
